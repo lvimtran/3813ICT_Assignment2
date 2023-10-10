@@ -2,13 +2,13 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('models/user.js');
+const User = require('../models/user');
 
 router.post('/register', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, email } = req.body;
 
   // Validate username and password
-  if (!username || !password || password.length < 6) {
+  if (!username || !email || !password || password.length < 6) {
     return res.status(400).send('Invalid input');
   }
 
@@ -26,6 +26,7 @@ router.post('/register', async (req, res) => {
     // Create a new user instance and save it to the database
     user = new User({
       username,
+      email,
       password: hashedPassword,
     });
     await user.save();

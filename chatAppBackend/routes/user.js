@@ -1,9 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const cors = require('cors');
 
-const User = require('../models/User');
+const User = require('../models/user');
 const Message = require('../models/message');
+
+app.use(cors())
 
 router.get('/messages/:channelId', async (req, res) => {
   try {
