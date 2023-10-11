@@ -45,6 +45,7 @@ const chatRoutes = require('./routes/chat');
 const uploadRoutes = require('./routes/upload');
 const groupRoutes = require('./routes/group');
 const channelRoutes = require('./routes/channel');
+const userRoutes = require('./routes/user')
 
 // Use routes
 app.use('/api/auth', authRoutes);
@@ -52,7 +53,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/channels', channelRoutes);
-
+app.use('/api/user', userRoutes);  
 
 io.on('connection', (socket) => {
     console.log('User connected');
