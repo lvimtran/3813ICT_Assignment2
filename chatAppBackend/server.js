@@ -8,7 +8,6 @@ const bcrypt = require('bcrypt'); // Import bcrypt for password comparison
 
 const app = express();
 const server = http.createServer(app);
-const io = socketio(server);
 
 const DB_NAME = 'myChatDB';
 // Use template literal syntax for string interpolation
@@ -25,12 +24,19 @@ db.once('open', function(){
     console.log("Connected to MongoDB database!");
 });
 
-// Use cors middleware and configure it if necessary
 app.use(cors({
-    origin: 'http://localhost:4200', // Your frontend server
-    methods: ['GET', 'POST'], // Allowed methods
-    credentials: true // Enable credentials (cookies, authorization headers, etc.)
+    origin: 'http://localhost:4200', 
+    methods: ['GET', 'POST'],
+    credentials: true 
 }));
+
+const io = socketio(server, {
+    cors: {
+        origin: "http://localhost:4200",  // Angular server
+        methods: ["GET", "POST"]
+    }
+});
+
 
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public')));
@@ -58,27 +64,29 @@ app.use('/api/user', userRoutes);
 io.on('connection', (socket) => {
     console.log('User connected');
 
+    const channelId = 'exampleChannelId';
+
     io.to(channelId).emit('newMessage', {
         content: 'Hello, world!',
-        channelId: 'exampleChannelId',
+        channelId,
         userId: 'exampleUserId',
         username: 'exampleUsername',
         timestamp: new Date() // If you're using timestamps
     });
 
-    socket.on('joinChannel', (data) => { // {username, channelId}
+    socket.on('joinChannel', (data) => {
         socket.join(data.channelId);
         io.to(data.channelId).emit('systemMessage', `${data.username} has joined the channel`);
         console.log(`User ${data.username} joined channel: ${data.channelId}`);
     });
 
-    socket.on('leaveChannel', (data) => { // {username, channelId}
+    socket.on('leaveChannel', (data) => { 
         socket.leave(data.channelId);
         io.to(data.channelId).emit('systemMessage', `${data.username} has left the channel`);
         console.log(`User ${data.username} left channel: ${data.channelId}`);
     });
 
-    socket.on('sendMessage', (msg) => { // {channelId, content, userId, username}
+    socket.on('sendMessage', (msg) => { 
         io.to(msg.channelId).emit('newMessage', msg);
     });
 
@@ -90,6 +98,5 @@ io.on('connection', (socket) => {
 
 // Port should be taken from process.env.PORT first for production use
 const PORT = process.env.PORT || 3000;
-
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
