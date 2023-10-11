@@ -1,77 +1,57 @@
+// /chatAppBackend/routes/auth.js
+
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { check, validationResult } = require('express-validator');
+
 const User = require('../models/user');
 
-router.post('/register', async (req, res) => {
-  const { username, password, email } = req.body;
+router.post('/login',
+    [
+        check('username', 'Username is required').notEmpty(),
+        check('password', 'Password is required').notEmpty()
+    ],
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
 
-  // Validate username and password
-  if (!username || !email || !password || password.length < 6) {
-    return res.status(400).send('Invalid input');
-  }
+        const { username, password } = req.body;
+        try {
+            const user = await User.findOne({ username });
+            if (!user) {
+                return res.status(400).json({ msg: 'Invalid Credentials' });
+            }
 
-  try {
-    // Check if the user already exists
-    let user = await User.findOne({ username });
-    if (user) {
-      return res.status(400).send('User already exists');
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) {
+                return res.status(400).json({ msg: 'Invalid Credentials' });
+            }
+
+            const payload = {
+                user: {
+                    id: user.id,
+                    roles: user.roles
+                }
+            };
+
+            jwt.sign(
+                payload,
+                process.env.JWT_SECRET,
+                { expiresIn: 3600 }, // Token expiration time in seconds
+                (err, token) => {
+                    if (err) throw err;
+                    res.json({ token });
+                }
+            );
+        } catch (err) {
+            console.error(err.message);
+            res.status(500).send('Server error');
+        }
     }
-
-    // Hash the password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Create a new user instance and save it to the database
-    user = new User({
-      username,
-      email,
-      password: hashedPassword,
-    });
-    await user.save();
-
-    res.status(201).send('Registration successful');
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Server error');
-  }
-});
-
-router.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-
-  try {
-    // Validate username and password
-    if (!username || !password) {
-      return res.status(400).send('Invalid input');
-    }
-
-    // Check if user exists
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(401).send('Invalid credentials');
-    }
-
-    // Check password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).send('Invalid credentials');
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user.id, username: user.username },
-      'your_jwt_secret', // Replace with your actual secret
-      { expiresIn: '1h' } // Token expiration time
-    );
-
-    // Send back the token
-    res.status(200).json({ token });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Server error');
-  }
-});
+);
 
 module.exports = router;

@@ -6,7 +6,14 @@ const cors = require('cors');
 const User = require('../models/user');
 const Message = require('../models/message');
 
+const { createUser, getUser, updateUser, deleteUser } = require('../controllers/userController');
+
 app.use(cors())
+
+router.post('/', createUser);
+router.get('/:id', getUser);
+router.put('/:id', updateUser);
+router.delete('/:id', deleteUser);
 
 router.get('/messages/:channelId', async (req, res) => {
   try {

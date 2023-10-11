@@ -19,7 +19,14 @@ const UserSchema = new mongoose.Schema({
     avatar: {
         type: String,
         default: 'path-to-default-avatar.jpg' // specify a path to a default avatar image
-    }
+    },
+    roles: {
+        type: [String],
+        required: true
+    },
+    groups: {
+        type: [String],  // Storing group IDs (from Groups model)
+    },
 }, { timestamps: true });
 
 // Hash the password before saving it to the database
