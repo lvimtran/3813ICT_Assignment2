@@ -6,7 +6,7 @@ const messageSchema = new mongoose.Schema({
   channel: { type: String, required: true },
   type: { type: String, required: true, enum: ['text', 'image'] },
   imageUrl: { type: String }
-}, { timestamps: true }); // Consider adding timestamps for sorting
+}, { timestamps: true }); 
 
 const Message = mongoose.model('Message', messageSchema);
 
