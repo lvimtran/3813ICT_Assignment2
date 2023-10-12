@@ -9,6 +9,7 @@ const bcrypt = require('bcrypt'); // Import bcrypt for password comparison
 const app = express();
 const server = http.createServer(app);
 
+
 const DB_NAME = 'myChatDB';
 // Use template literal syntax for string interpolation
 const DB_URL = `mongodb://localhost/${DB_NAME}`;
@@ -50,7 +51,6 @@ const authRoutes = require('./routes/auth');
 const chatRoutes = require('./routes/chat');
 const uploadRoutes = require('./routes/upload');
 const groupRoutes = require('./routes/group');
-const channelRoutes = require('./routes/channel');
 const userRoutes = require('./routes/user')
 
 // Use routes
@@ -58,8 +58,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/groups', groupRoutes);
-app.use('/api/channels', channelRoutes);
 app.use('/api/user', userRoutes);  
+
+let users = {}
 
 io.on('connection', (socket) => {
     console.log('User connected');
@@ -76,8 +77,10 @@ io.on('connection', (socket) => {
 
     socket.on('joinChannel', (data) => {
         socket.join(data.channelId);
+        users[socket.id] = data.username;
         io.to(data.channelId).emit('systemMessage', `${data.username} has joined the channel`);
         console.log(`User ${data.username} joined channel: ${data.channelId}`);
+        socket.broadcast.to(data.channelId).emit('userJoined', `${username} has joined the chat`);
     });
 
     socket.on('leaveChannel', (data) => { 
@@ -92,6 +95,9 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log('User disconnected');
+        let username = users[socket.id];
+        socket.broadcast.emit('userLeft', `${username} has left the chat`);
+        delete users[socket.id];
     });
 
 });
