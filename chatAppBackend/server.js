@@ -93,6 +93,14 @@ io.on('connection', (socket) => {
     });
   });
 
+  module.exports = { app, server, io };  // named export
+
+
+if (require.main === module) {
+    const PORT = process.env.PORT || 3000;
+    server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
 // Port should be taken from process.env.PORT first for production use
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
