@@ -52,6 +52,7 @@ const chatRoutes = require('./routes/chat');
 const uploadRoutes = require('./routes/upload');
 const groupRoutes = require('./routes/group');
 const userRoutes = require('./routes/user')
+const Message = require('./models/message')
 
 // Use routes
 app.use('/api/auth', authRoutes);
@@ -61,46 +62,36 @@ app.use('/api/groups', groupRoutes);
 app.use('/api/user', userRoutes);  
 
 let users = {}
+const userCountsPerChannel = {};
+
+const defaultAvatars = [
+    'profile.jpeg', 'profile1.png', 'profile2.png', 'profile3.png', 'profile4.png', 'profile5.png', 'profile6.jpeg', 'profile7.png', 'profile8.png', 'profile9.jpeg'
+]
 
 io.on('connection', (socket) => {
     console.log('User connected');
-
-    const channelId = 'exampleChannelId';
-
-    io.to(channelId).emit('newMessage', {
-        content: 'Hello, world!',
-        channelId,
-        userId: 'exampleUserId',
-        username: 'exampleUsername',
-        timestamp: new Date() // If you're using timestamps
+    
+    socket.on('joinChannel', ({ username, channel }) => {
+      socket.join(channel);      
+      io.to(channel).emit('userEvent', `${username} has joined the channel.`);
     });
-
-    socket.on('joinChannel', (data) => {
-        socket.join(data.channelId);
-        users[socket.id] = data.username;
-        io.to(data.channelId).emit('systemMessage', `${data.username} has joined the channel`);
-        console.log(`User ${data.username} joined channel: ${data.channelId}`);
-        socket.broadcast.to(data.channelId).emit('userJoined', `${username} has joined the chat`);
+    
+    socket.on('sendMessage', (msg) => {
+      io.to(msg.channel).emit('newMessage', { username: msg.username, text: msg.text });
     });
-
-    socket.on('leaveChannel', (data) => { 
-        socket.leave(data.channelId);
-        io.to(data.channelId).emit('systemMessage', `${data.username} has left the channel`);
-        console.log(`User ${data.username} left channel: ${data.channelId}`);
+  
+    socket.on('leaveChannel', ({ username, channel }) => {
+      socket.leave(channel);
+      io.to(channel).emit('userEvent', `${username} has left the channel.`);
     });
-
-    socket.on('sendMessage', (msg) => { 
-        io.to(msg.channelId).emit('newMessage', msg);
-    });
-
+  
     socket.on('disconnect', () => {
-        console.log('User disconnected');
-        let username = users[socket.id];
+      console.log('User disconnected');
+      let username = users[socket.id];
         socket.broadcast.emit('userLeft', `${username} has left the chat`);
         delete users[socket.id];
     });
-
-});
+  });
 
 // Port should be taken from process.env.PORT first for production use
 const PORT = process.env.PORT || 3000;

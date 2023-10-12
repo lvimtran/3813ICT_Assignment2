@@ -1,24 +1,25 @@
+// routers/upload.js
 const express = require('express');
 const multer = require('multer');
+const path = require('path');
+
 const router = express.Router();
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, './uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, new Date().toISOString().replace(/:/g, '-') + file.originalname);
-  }
-});
-const upload = multer({ storage });
+const storage = multer.memoryStorage();  // Using memory storage. Consider using diskStorage for actual file storage.
+const upload = multer({ storage: storage, limits: { fileSize: 5 * 1024 * 1024 } });  // Limiting file size to 5MB as an example.
 
-router.post('/uploadAvatar', upload.single('avatar'), (req, res) => {
-  try {
-    res.send({ filePath: '/uploads/' + req.file.filename });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Upload failed');
-  }
+router.post('/', upload.single('image'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded.' });
+        }
+
+        const image = req.file.buffer.toString('base64');  
+        res.status(200).json({ message: 'Image uploaded successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
 module.exports = router;

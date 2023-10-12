@@ -11,6 +11,8 @@ const User = require('../models/user');
 
 const router = express.Router();
 
+
+
 router.post('/register', async (req, res) => {
   try {
     const user = new User({

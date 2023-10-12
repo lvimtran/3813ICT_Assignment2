@@ -1,28 +1,13 @@
 const mongoose = require('mongoose');
 
-const MessageSchema = new mongoose.Schema({
-    content: {
-        type: String,
-        required: true
-    },
-    sender: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-    channel: {
-        type: String,
-        required: true
-    },
-    type: {  // to distinguish between text and image messages
-        type: String,
-        enum: ['text', 'image'],
-        default: 'text'
-    },
-    imageUrl: { // only applicable if type is 'image'
-        type: String,
-        default: null
-    }
-}, { timestamps: true });
+const messageSchema = new mongoose.Schema({
+  content: { type: String, required: true },
+  sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  channel: { type: String, required: true },
+  type: { type: String, required: true, enum: ['text', 'image'] },
+  imageUrl: { type: String }
+}, { timestamps: true }); // Consider adding timestamps for sorting
 
-module.exports = mongoose.model('Message', MessageSchema);
+const Message = mongoose.model('Message', messageSchema);
+
+module.exports = Message;

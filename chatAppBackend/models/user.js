@@ -16,9 +16,9 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    avatar: {
+    profileImage: {
         type: String,
-        default: 'path-to-default-avatar.jpg' // specify a path to a default avatar image
+        default: '/frontend/src/assets/profile.jpeg' // specify a path to a default avatar image
     },
     roles: {
         type: [String],
